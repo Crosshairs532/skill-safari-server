@@ -15,7 +15,7 @@ console.log(process.env.DB_USER);
 
 // DB_USER=Job
 // Te09MhXqqfJvQSMm
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = "mongodb+srv://jobuser:Te09MhXqqfJvQSMm@cluster0.wtx9jbs.mongodb.net/?retryWrites=true&w=majority";
 
 
@@ -63,13 +63,29 @@ async function run() {
 
         app.get('/allJobs', async (req, res) => {
             let query = {};
+            let id = {}
+
             if (req.query?.jobtype) {
                 query = { type: req.query?.jobtype }
                 console.log(query);
             }
+
+
             const result = await JobCollections.find(query).toArray();
             res.send(result)
+
         })
+
+        app.get('/alljobs/details', async (req, res) => {
+            let id = {};
+            if (req.query?.id) {
+                id = { _id: new ObjectId(req.query?.id) }
+                console.log(id, "id");
+            }
+            const resultByid = await JobCollections.findOne(id);
+            res.send(resultByid);
+        })
+
 
 
 
