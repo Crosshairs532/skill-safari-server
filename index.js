@@ -68,6 +68,10 @@ async function run() {
         })
 
         // applied job
+        app.get('/appliedjobs', async (req, res) => {
+            const result = await appliedJobCollection.find().toArray();
+            res.send(result)
+        })
         app.post('/appliedjobs', async (req, res) => {
             const job = req.body;
             const result = await appliedJobCollection.insertOne(job);
