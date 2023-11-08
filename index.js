@@ -36,14 +36,16 @@ async function run() {
 
 
         app.get('/allJobs', async (req, res) => {
+            console.log(req.query.email);
             let query = {};
-            let id = {}
 
-            if (req.query?.jobtype) {
-                query = { Jtype: req.query?.jobtype }
-                console.log(query);
+            if (req.query.jobtype) {
+                query.Jtype = req.query.jobtype;
             }
-
+            if (req.query.email) {
+                query.Pemail = req.query.email;
+            }
+            console.log(query);
 
             const result = await JobCollections.find(query).toArray();
             res.send(result)
@@ -59,8 +61,6 @@ async function run() {
             const resultByid = await JobCollections.findOne(id);
             res.send(resultByid);
         })
-
-
         app.post('/allJobs', async (req, res) => {
             const job = req.body;
             const result = await JobCollections.insertOne(job);
@@ -70,14 +70,24 @@ async function run() {
         // applied job
         app.get('/appliedjobs', async (req, res) => {
             const result = await appliedJobCollection.find().toArray();
-            res.send(result)
+            res.send(result);
         })
         app.post('/appliedjobs', async (req, res) => {
             const job = req.body;
-            const result = await appliedJobCollection.insertOne(job);
-            res.send(result);
+            const newJob = { email: job.email, name: job.name, resume: job.resume }
+            console.log(job._id);
+            const id = { _id: new ObjectId(job._id) }
+            const update = {
+                $inc: {
+                    applicants: 1
+                }
+            }
+            const updatedOne = await JobCollections.updateOne(id, update)
+            const result = await appliedJobCollection.insertOne(newJob);
+            res.send({ success: true });
 
         })
+
 
 
 
