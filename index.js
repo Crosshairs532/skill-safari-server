@@ -67,6 +67,41 @@ async function run() {
             res.send(result);
         })
 
+        app.put('/allJobs/:id', async (req, res) => {
+            const { image,
+                Pname,
+                Jtitle,
+                salary,
+                Jtype,
+                applicants,
+                description,
+                postdate1,
+                deadline1
+            } = req.body;
+            console.log(req.body);
+            const options = { upsert: true };
+            const id = { _id: new ObjectId(req.params.id) }
+            const updateDoc = {
+                $set: {
+                    image: image,
+                    Pname: Pname,
+                    Jtitle: Jtitle,
+                    salary: salary,
+                    Jtype: Jtype,
+                    applicants: applicants,
+                    description: description,
+                    postdate1: postdate1,
+                    deadline1: deadline1
+
+                },
+            };
+
+            const result = await JobCollections.updateOne(id, updateDoc, options)
+            res.send(result);
+
+
+        })
+
         // applied job
         app.get('/appliedjobs', async (req, res) => {
             const result = await appliedJobCollection.find().toArray();
