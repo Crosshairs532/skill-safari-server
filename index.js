@@ -32,41 +32,15 @@ async function run() {
 
         await client.connect();
         const JobCollections = client.db('JobSeekingDB').collection('Alljobs');
+        const appliedJobCollection = client.db('JobSeekingDB').collection('Appliedjobs');
 
-
-
-        // app.get('/allJobs', async (req, res) => {
-        //     console.log(req.query.jobtype, "inside server");
-        //     let query = {};
-
-        //     if (req.query.jobtype != 'all') {
-        //         query["type"] = req.query.jobtype;
-        //         try {
-        //             const result = await JobCollections.find(query).toArray();
-        //             res.send(result);
-        //         } catch (error) {
-        //             console.error(error);
-        //             res.status(500).send('Error fetching job data');
-        //         }
-        //     }
-        //     else if (req.query.jobtype == 'all') {
-        //         const result = await JobCollections.find().toArray();
-        //         res.send(result);
-        //     }
-        //     else {
-        //         const result = await JobCollections.find().toArray();
-        //         res.send(result);
-        //     }
-        //     //   console.log("here",query);
-
-        // });
 
         app.get('/allJobs', async (req, res) => {
             let query = {};
             let id = {}
 
             if (req.query?.jobtype) {
-                query = { type: req.query?.jobtype }
+                query = { Jtype: req.query?.jobtype }
                 console.log(query);
             }
 
@@ -84,6 +58,21 @@ async function run() {
             }
             const resultByid = await JobCollections.findOne(id);
             res.send(resultByid);
+        })
+
+
+        app.post('/allJobs', async (req, res) => {
+            const job = req.body;
+            const result = await JobCollections.insertOne(job);
+            res.send(result);
+        })
+
+        // applied job
+        app.post('/appliedjobs', async (req, res) => {
+            const job = req.body;
+            const result = await appliedJobCollection.insertOne(job);
+            res.send(result);
+
         })
 
 
