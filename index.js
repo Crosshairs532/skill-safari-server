@@ -110,13 +110,15 @@ async function run() {
         })
 
         // applied job
-        app.get('/appliedjobs', async (req, res) => {
-            const result = await appliedJobCollection.find().toArray();
+        app.get('/appliedjobs/:email', async (req, res) => {
+            const email1 = req.params.email;
+            const query = { email: email1 }
+            const result = await appliedJobCollection.find(query).toArray();
             res.send(result);
         })
         app.post('/appliedjobs', async (req, res) => {
             const job = req.body;
-            const newJob = { email: job.email, name: job.name, resume: job.resume }
+            const newJob = { email: job.email, name: job.name, resume: job.resume, Jtype: job.Jtype }
             console.log(job._id);
             const id = { _id: new ObjectId(job._id) }
             const update = {
@@ -129,12 +131,6 @@ async function run() {
             res.send({ success: true });
 
         })
-
-
-
-
-
-
 
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
