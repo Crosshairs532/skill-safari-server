@@ -2,10 +2,15 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const port = process.env.PORT || 4000;
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 require('dotenv').config()
-app.use(cors())
+app.use(cookieParser())
+app.use(cors({
+    origin: 'http://localhost:5173',
+    credentials: true
+}))
 app.use(express.json())
-
 app.get('/', async (req, res) => {
     res.send('server is running at this moment...')
 })
@@ -16,8 +21,7 @@ console.log(process.env.DB_USER);
 // DB_USER=Job
 // Te09MhXqqfJvQSMm
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-const uri = "mongodb+srv://jobuser:Te09MhXqqfJvQSMm@cluster0.wtx9jbs.mongodb.net/?retryWrites=true&w=majority";
-
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.wtx9jbs.mongodb.net/?retryWrites=true&w=majority`;
 
 const client = new MongoClient(uri, {
     serverApi: {
@@ -26,6 +30,25 @@ const client = new MongoClient(uri, {
         deprecationErrors: true,
     }
 });
+const varify = async (req, res, next) => {
+    const token = req.cookies?.token;
+    console.log(token);
+    if (!token) {
+        return res.status(401).send({ message: 'unauthorized user' })
+
+    }
+    else {
+        jwt.verify(token, process.env.TOKEN, (err, decode) => {
+            if (err) {
+                return res.status(401).send({ message: 'unauthorized user' })
+            }
+            req.user = decode;
+            next()
+
+        })
+    }
+
+}
 
 async function run() {
     try {
@@ -33,10 +56,23 @@ async function run() {
         await client.connect();
         const JobCollections = client.db('JobSeekingDB').collection('Alljobs');
         const appliedJobCollection = client.db('JobSeekingDB').collection('Appliedjobs');
+        app.post('/jwt', async (req, res) => {
+            const user = req.body;
+            console.log(user, "user");
+            const token = jwt.sign(user, process.env.TOKEN, { expiresIn: '2h' })
+            res.cookie("token", token, { httpOnly: true, secure: true, sameSite: 'none' }).send({ token: token })
+        })
+        app.post('/logout', async (req, res) => {
+            const user = req.body;
+            res.clearCookie("token", { maxAge: 0 }).send({ success: true })
+        }
+        )
 
 
         app.get('/allJobs', async (req, res) => {
             console.log(req.query.email);
+
+
             let query = {};
 
             if (req.query.jobtype) {
@@ -54,6 +90,7 @@ async function run() {
 
         app.get('/alljobs/details', async (req, res) => {
             let id = {};
+
             if (req.query?.id) {
                 id = { _id: new ObjectId(req.query?.id) }
                 console.log(id, "id");
@@ -110,7 +147,12 @@ async function run() {
         })
 
         // applied job
-        app.get('/appliedjobs/:email', async (req, res) => {
+        app.get('/appliedjobs/:email', varify, async (req, res) => {
+            console.log(req.params.email);
+            console.log(req.user.email);
+            if (req.user.email != req.params.email) {
+                return res.status(401).send({ message: 'unauthorized user' })
+            }
             const email1 = req.params.email;
             const query = { email: email1 }
             const result = await appliedJobCollection.find(query).toArray();
